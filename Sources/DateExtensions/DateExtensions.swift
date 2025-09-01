@@ -3,6 +3,7 @@
 
 import Foundation
 
+@available(iOS 15.0, *)
 public extension Date {
     private var calendar: Calendar { Calendar.current }
     
@@ -59,8 +60,12 @@ public extension Date {
         calendar.startOfDay(for: self)
     }
     
+    var endOfDay: Date {
+        calendar.date(bySettingHour: 23, minute: 59, second: 59, of: self) ?? self
+    }
+    
     /// Checks if the given date is in the same day as `self` (ignoring time)
-    func isWithinToday(date: Date) -> Bool {
+    func isWithinOneDay(date: Date) -> Bool {
         calendar.isDate(self, inSameDayAs: date)
     }
     
@@ -76,13 +81,18 @@ public extension Date {
         return abs(dayDiff) <= 30
     }
     
+    func isWithinDays(days: Int, date: Date) -> Bool {
+        let dayDiff = calendar.dateComponents([.day], from: self.startOfDay, to: date.startOfDay).day ?? .max
+        return abs(dayDiff) <= days
+    }
+    
     // Init from day/month/year
     init(day: Int, month: Int, year: Int) {
         var components = DateComponents()
         
         // Clamp month to 1...12
         let safeMonth = month.clamped(to: 1...12)
-
+        
         // Days in month lookup, accounting for leap years
         let daysInMonth: [Int: Int] = [
             1: 31, 2: year.isLeapYear ? 29 : 28, 3: 31,
@@ -134,6 +144,7 @@ public extension Date {
         return formatter
     }()
     
+    @MainActor
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full    // "3 days ago", "in 2 weeks"
@@ -151,10 +162,38 @@ public extension Date {
     }
     
     /// Example: "3 days ago" or "in 2 weeks"
+    @available(iOS 15.0, macOS 10.15, *)
     var relativeDescription: String {
-        Self.relativeFormatter.localizedString(for: self, relativeTo: .now)
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: self, relativeTo: .now)
     }
-}
+    
+    static func ago(days: Int = 0, weeks: Int = 0, months: Int = 0, years: Int = 0) -> Date {
+        let calendar = Calendar.current
+        let base = calendar.startOfDay(for: Date())
+        
+        var components = DateComponents()
+        components.day = -(days + weeks * 7)
+        components.month = -months
+        components.year = -years
+        
+        let result = calendar.date(byAdding: components, to: base)!
+        return calendar.startOfDay(for: result)
+    }
+    
+    static func `in`(days: Int = 0, weeks: Int = 0, months: Int = 0, years: Int = 0) -> Date {
+        let calendar = Calendar.current
+        let base = calendar.startOfDay(for: Date())
+        
+        var components = DateComponents()
+        components.day = days + weeks * 7
+        components.month = months
+        components.year = years
+        
+        let result = calendar.date(byAdding: components, to: base)!
+        return calendar.startOfDay(for: result)
+    }}
 
 fileprivate extension Int {
     var isLeapYear: Bool {
