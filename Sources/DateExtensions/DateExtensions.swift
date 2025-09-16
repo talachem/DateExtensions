@@ -64,9 +64,14 @@ public extension Date {
         calendar.date(bySettingHour: 23, minute: 59, second: 59, of: self) ?? self
     }
     
+    func isSameDay(as date: Date) -> Bool {
+        calendar.isDate(self, inSameDayAs: date)
+    }
+    
     /// Checks if the given date is in the same day as `self` (ignoring time)
     func isWithinOneDay(date: Date) -> Bool {
-        calendar.isDate(self, inSameDayAs: date)
+        let dayDiff = calendar.dateComponents([.day], from: self.startOfDay, to: date.startOfDay).day ?? .max
+        return abs(dayDiff) <= 1
     }
     
     /// Checks if the given date is within 7 calendar days from `self`
@@ -116,6 +121,67 @@ public extension Date {
     
     var isWeekend: Bool {
         calendar.isDateInWeekend(self)
+    }
+    
+    /// Returns true if the date is before "now"
+    var isInPast: Bool {
+        self < Date()
+    }
+    
+    /// Returns true if the date is after "now"
+    var isInFuture: Bool {
+        self > Date()
+    }
+    
+    /// Returns true if the date is exactly "today"
+    var isToday: Bool {
+        Calendar.current.isDateInToday(self)
+    }
+
+    /// Returns true if the date is tomorrow
+    var isTomorrow: Bool {
+        Calendar.current.isDateInTomorrow(self)
+    }
+
+    /// Returns true if the date was yesterday
+    var isYesterday: Bool {
+        Calendar.current.isDateInYesterday(self)
+    }
+
+    var isThisWeek: Bool {
+        calendar.isDate(self, equalTo: .now, toGranularity: .weekOfYear)
+    }
+    
+    var isLastWeek: Bool {
+        guard let prevWeek = calendar.date(byAdding: .weekOfYear, value: -1, to: .now) else { return false }
+        return calendar.isDate(self, equalTo: prevWeek, toGranularity: .weekOfYear)
+    }
+    
+    var isThisMonth: Bool {
+        calendar.isDate(self, equalTo: .now, toGranularity: .month)
+    }
+    
+    var isLastMonth: Bool {
+        guard let prevMonth = calendar.date(byAdding: .month, value: -1, to: .now) else { return false }
+        return calendar.isDate(self, equalTo: prevMonth, toGranularity: .month)
+    }
+    
+    func isSameWeek(as date: Date) -> Bool {
+        calendar.isDate(self, equalTo: date, toGranularity: .weekOfYear)
+    }
+
+    func isPreviousWeek(of date: Date) -> Bool {
+        guard let prevWeek = calendar.date(byAdding: .weekOfYear, value: -1, to: date) else { return false }
+        return calendar.isDate(self, equalTo: prevWeek, toGranularity: .weekOfYear)
+    }
+
+    func isSameMonth(as date: Date) -> Bool {
+        calendar.isDate(self, equalTo: date, toGranularity: .month)
+    }
+
+    func isPreviousMonth(of date: Date) -> Bool {
+        guard let prevMonth = calendar.date(byAdding: .month, value: -1, to: date) else { return false }
+        return calendar.isDate(self, equalTo: prevMonth, toGranularity: .month)
     }
     
     var asString: String {
