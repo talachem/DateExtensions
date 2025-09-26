@@ -184,6 +184,33 @@ public extension Date {
         return calendar.isDate(self, equalTo: prevMonth, toGranularity: .month)
     }
     
+    /// Checks if the date is the first day of its week
+    var isFirstDayOfWeek: Bool {
+        guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: self) else { return false }
+        return calendar.isDate(self, inSameDayAs: weekInterval.start)
+    }
+
+    /// Checks if the date is the last day of its week
+    var isLastDayOfWeek: Bool {
+        guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: self) else { return false }
+        // Subtract 1 second from the end to get the last day
+        let lastDay = calendar.date(byAdding: .second, value: -1, to: weekInterval.end) ?? weekInterval.end
+        return calendar.isDate(self, inSameDayAs: lastDay)
+    }
+
+    /// Checks if the date is the first day of its month
+    var isFirstDayOfMonth: Bool {
+        guard let monthInterval = calendar.dateInterval(of: .month, for: self) else { return false }
+        return calendar.isDate(self, inSameDayAs: monthInterval.start)
+    }
+
+    /// Checks if the date is the last day of its month
+    var isLastDayOfMonth: Bool {
+        guard let monthInterval = calendar.dateInterval(of: .month, for: self) else { return false }
+        let lastDay = calendar.date(byAdding: .second, value: -1, to: monthInterval.end) ?? monthInterval.end
+        return calendar.isDate(self, inSameDayAs: lastDay)
+    }
+    
     var asString: String {
         let y = year
         let m = String(format: "%02d", month)
